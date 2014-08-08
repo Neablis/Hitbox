@@ -7,6 +7,8 @@ var jshint = require('gulp-jshint');
 var concat = require('gulp-concat');
 var uglify = require('gulp-uglify');
 var rename = require('gulp-rename');
+var jsdoc = require("gulp-jsdoc");
+
 
 gulp.task('lint', function() {
     return gulp.src('./src/*.js')
@@ -22,6 +24,19 @@ gulp.task('scripts', function() {
         .pipe(uglify())
         .pipe(gulp.dest('dist'));
 });
+
+// Create docs
+gulp.task('docs', function() {
+    return gulp.src("./src/*.js")
+        .pipe(jsdoc('./documentation-output'))
+});
+
+gulp.task('readme', function() {
+    return gulp.src("./src/*.js")
+        .pipe(jsdoc('./documentation-output'))
+});
+
+
 
 // Watch Files For Changes
 gulp.task('watch', function() {

@@ -14,23 +14,43 @@
  */
 
 /* jshint strict: true */
-(function (name, definition) {
-    "use strict";
-    if (typeof module !== 'undefined') {
-        module.exports = definition();
-    } else if (typeof define === 'function' && typeof define.amd === 'object') {
-        define(definition);
-    } else {
-        this[name] = definition();
+;(function ( name, definition ) {
+    var theModule = definition(),
+        hasDefine = typeof define === 'function',
+        hasExports = typeof module !== 'undefined' && module.exports;
+
+    if ( hasDefine ) { // AMD Module
+        define(theModule);
+    } else if ( hasExports ) { // Node.js Module
+        module.exports = theModule;
+    } else { // Assign to common namespaces or simply the global object (window)
+
+
+        // account for for flat-file/global module extensions
+        var obj = definition();
+        var namespaces = name.split(".");
+        var scope = (this.jQuery || this.ender || this.$ || this);
+        for (var i = 0; i < namespaces.length; i++) {
+            var packageName = namespaces[i];
+            if (obj && i == namespaces.length - 1) {
+                obj[packageName] = theModule;
+            } else if (typeof scope[packageName] === "undefined") {
+                scope[packageName] = {};
+            }
+            scope[packageName] = obj;
+        }
+
     }
-}('Hitbox', function () {
+})('Hitbox', function () {
     "use strict";
     /** Properties of the module. */
-    var home_router = 'http://api.hitbox.tv/';
+    var home_router = '';
     /** @constructor */
     var Hitbox = function (config) {
-        if (config) {
-            this.home_router = config.home_router || undefined;
+        if (config !== undefined) {
+            this.home_router = config.home_router || 'http://api.hitbox.tv/';
+        } else {
+            this.home_router = 'http://api.hitbox.tv/';
         }
     };
 
@@ -365,7 +385,7 @@
             data = {},
             url = 'media/';
 
-        if (params.stream) {
+        if (params !== undefined && params.stream) {
             url += params.stream;
         }
 
@@ -542,4 +562,4 @@
     };
 
     return Hitbox;
-}));
+});

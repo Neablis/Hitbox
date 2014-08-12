@@ -14,23 +14,44 @@
  */
 
 /* jshint strict: true */
-(function (name, definition) {
-    "use strict";
-    if (typeof module !== 'undefined') {
-        module.exports = definition();
-    } else if (typeof define === 'function' && typeof define.amd === 'object') {
-        define(definition);
-    } else {
-        this[name] = definition();
+;(function ( name, definition ) {
+    var theModule = definition(),
+        hasDefine = typeof define === 'function',
+        hasExports = typeof module !== 'undefined' && module.exports;
+
+    if ( hasDefine ) { // AMD Module
+        define(theModule);
+    } else if ( hasExports ) { // Node.js Module
+        module.exports = theModule;
+    } else { // Assign to common namespaces or simply the global object (window)
+
+
+        // account for for flat-file/global module extensions
+        var obj = definition();
+        var namespaces = name.split(".");
+        var scope = (this.jQuery || this.ender || this.$ || this);
+        for (var i = 0; i < namespaces.length; i++) {
+            var packageName = namespaces[i];
+            if (obj && i == namespaces.length - 1) {
+                obj[packageName] = theModule;
+            } else if (typeof scope[packageName] === "undefined") {
+                scope[packageName] = {};
+            }
+            scope[packageName] = obj;
+        }
+
     }
-}('Hitbox', function () {
+})('Hitbox', function () {
     "use strict";
     /** Properties of the module. */
-    var home_router = 'http://api.hitbox.tv/';
+    var home_router = '';
+    var chat_socket = null;
     /** @constructor */
     var Hitbox = function (config) {
-        if (config) {
-            this.home_router = config.home_router || undefined;
+        if (config !== undefined) {
+            this.home_router = config.home_router || 'http://api.hitbox.tv';
+        } else {
+            this.home_router = 'http://api.hitbox.tv';
         }
     };
 
@@ -65,28 +86,15 @@
         var data_obj;
         var header;
         try {
-            data_obj = response.split("\r\n");
-            header = JSON.parse(data_obj[0]);
-            if (header.code !== undefined) {
-                data_obj = data_obj.splice(1, data_obj.length - 2);
-            } else {
-                //wtf why arnt you wrapped?
-                data_obj = data_obj.splice(0, data_obj.length - 1);
-            }
-            if (data_obj.length === 1) {
-                data_obj = JSON.parse(data_obj[0]);
-            } else {
-                Array.prototype.forEach.call(data_obj, function (el, i) {
-                    data_obj[i] = JSON.parse(el);
-                });
-            }
+            header = response.status;
+            data_obj = response;
         } catch (e) {
             return callback(null, response);
         }
-        if (data_obj.error || header.code >= 300) {
-            return callback(data_obj.error, data_obj);
+        if (header >= 300) {
+            return callback(header, data_obj.response);
         }
-        return callback(null, data_obj);
+        return callback(null, data_obj.response);
     };
 
     /**
@@ -170,10 +178,9 @@
             xhReq.onload = function () {
                 var data_obj;
                 if (options.raw) {
-                    data_obj = xhReq.responseText.slice(xhReq.responseText.indexOf("\r\n") + 2, xhReq.responseText.length);
                     callback(null, xhReq);
                 } else {
-                    that._parse_response(xhReq.responseText, callback);
+                    that._parse_response(xhReq, callback);
                 }
             };
 
@@ -268,10 +275,9 @@
             xhReq.onload = function () {
                 var data_obj;
                 if (options.raw) {
-                    data_obj = xhReq.responseText.slice(xhReq.responseText.indexOf("\r\n") + 2, xhReq.responseText.length);
                     callback(null, xhReq);
                 } else {
-                    that._parse_response(xhReq.responseText, callback);
+                    that._parse_response(xhReq, callback);
                 }
             };
 
@@ -317,10 +323,18 @@
 
         } else {
             if (params.uri.indexOf('://') === -1) {
-                url = options.home_router + "/" + params.uri + '?';
+                if (query_params.length !== undefined) {
+                    url = options.home_router + "/" + params.uri + '?';
+                } else {
+                    url = options.home_router + "/" + params.uri;
+                }
             }
             else {
-                url = params.uri + '?';
+                if (query_params.length !== undefined) {
+                    url = params.uri + '?';
+                } else {
+                    url = params.uri;
+                }
             }
         }
 
@@ -365,11 +379,11 @@
             data = {},
             url = 'media/';
 
-        if (params.stream) {
+        if (params !== undefined && params.stream) {
             url += params.stream;
         }
 
-        return this._get_message(data, {home_router: router, url: url, raw: true}, callback);
+        return this._get_message(data, {home_router: router, url: url}, callback);
     };
 
     /**
@@ -396,7 +410,7 @@
 
         url += params.user;
 
-        return this._get_message(data, {home_router: router, url: url, raw: true}, callback);
+        return this._get_message(data, {home_router: router, url: url}, callback);
     };
 
     /**
@@ -433,7 +447,7 @@
             data.limit = params.limit;
         }
 
-        return this._get_message(data, {home_router: router, url: url, raw: true}, callback);
+        return this._get_message(data, {home_router: router, url: url}, callback);
     };
 
     /**
@@ -453,7 +467,7 @@
             data = {},
             url = 'games/';
 
-        return this._get_message(data, {home_router: router, url: url, raw: true}, callback);
+        return this._get_message(data, {home_router: router, url: url}, callback);
     };
 
     /**
@@ -478,7 +492,91 @@
             url += params.team;
         }
 
-        return this._get_message(data, {home_router: router, url: url, raw: true}, callback);
+        return this._get_message(data, {home_router: router, url: url}, callback);
+    };
+
+    /**
+     * Returns a list of chats
+     * @name Hitbox#chats
+     * @public
+     * @function
+     * @param {object} params - params to add to function
+     * @param {object} options - options for the ajax call
+     * @param {function} callback - callback callback
+     * @returns {Object} xhr - xDomainObject
+     * @example
+     */
+    Hitbox.prototype.chats = function (params, options, callback) {
+        options = options || {};
+        var router = options.router || this.home_router,
+            data = {},
+            url = 'chat/servers';
+
+        return this._get_message(data, {home_router: router, url: url}, callback);
+    };
+
+    /**
+     * Connect to chat
+     * @name Hitbox#chat_connect
+     * @public
+     * @function
+     * @param {object} params - params to add to function
+     * @param {object} options - options for the ajax call
+     * @param {function} callback - callback callback
+     * @returns {Object} xhr - xDomainObject
+     * @example
+     */
+    Hitbox.prototype.chats = function (params, options, callback) {
+        options = options || {};
+        var router = options.router || this.home_router,
+            data = {},
+            url = 'chat/servers';
+
+        this.chats(null, null, function (error, response) {
+            if (error) {
+                callback("Error getting chats list");
+            }
+            this.chat_socket = new WebSocket("ws://www.example.com/socketserver");
+        });
+    };
+
+    /**
+     * get a websocket address
+     * @name Hitbox#_get_websocket
+     * @private
+     * @function
+     * @param {object} params - params to add to function
+     * @param {object} options - options for the ajax call
+     * @param {function} callback - callback callback
+     * @returns {Object} xhr - xDomainObject
+     * @example
+     */
+    Hitbox.prototype._get_websocket = function (params, options, callback) {
+        options = options || {};
+        var router = options.router || this.home_router,
+            data = {},
+            url = 'socket.io/1/',
+            random = false,
+            index = -1,
+            chats,
+            url;
+
+        if (params === undefined || params.chats === undefined || params.chats.length === 0) {
+            callback('No chats provided');
+        }
+
+        chats = params.chats;
+
+        if (params.random !== undefined) {
+            random = params.random;
+        }
+
+        if (random) {
+            index = Math.random() * (chats.length - 0);
+        }
+
+        url = 'http://',
+            url +=
     };
 
     /**
@@ -498,7 +596,7 @@
         options = options || {};
         var router = options.router || this.home_router,
             data = {},
-            url = 'auth/token/';
+            url = 'auth/token';
 
         if (params.login === undefined || params.pass === undefined) {
             return callback('Missing params');
@@ -508,7 +606,7 @@
         data.pass = params.pass;
         data.app = "desktop";
 
-        return this._post_message(data, {home_router: router, url: url, raw: true}, callback);
+        return this._post_message(data, {home_router: router, url: url}, callback);
     };
 
     /**
@@ -538,8 +636,8 @@
 
         data.token = params.token;
 
-        return this._get_message(data, {home_router: router, url: url, raw: true}, callback);
+        return this._get_message(data, {home_router: router, url: url}, callback);
     };
 
     return Hitbox;
-}));
+});

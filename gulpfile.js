@@ -36,8 +36,6 @@ gulp.task('readme', function() {
         .pipe(jsdoc('./documentation-output'))
 });
 
-
-
 // Watch Files For Changes
 gulp.task('watch', function() {
     gulp.watch('src/*.js', ['lint', 'scripts']);

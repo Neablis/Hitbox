@@ -1,4 +1,31 @@
-/**
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Source: hitbox.js</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Source: hitbox.js</h1>
+
+    
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>/**
  * @fileOverview
  * @author Mitchell DeMarco
  * @version 0.1
@@ -17,7 +44,7 @@
 ;(function ( name, definition ) {
     var theModule = definition(),
         hasDefine = typeof define === 'function',
-        hasExports = typeof module !== 'undefined' && module.exports;
+        hasExports = typeof module !== 'undefined' &amp;&amp; module.exports;
 
     if ( hasDefine ) { // AMD Module
         define(theModule);
@@ -30,9 +57,9 @@
         var obj = definition();
         var namespaces = name.split(".");
         var scope = (this.jQuery || this.ender || this.$ || this);
-        for (var i = 0; i < namespaces.length; i++) {
+        for (var i = 0; i &lt; namespaces.length; i++) {
             var packageName = namespaces[i];
-            if (obj && i == namespaces.length - 1) {
+            if (obj &amp;&amp; i == namespaces.length - 1) {
                 obj[packageName] = theModule;
             } else if (typeof scope[packageName] === "undefined") {
                 scope[packageName] = {};
@@ -74,20 +101,6 @@
         return this;
     };
 
-
-    /**
-     * Get a value from the hitbox object
-     * @name Hitbox#set
-     * @function
-     * @public
-     * @param {object} home_router - object key/val to set
-     * @example
-     * Hitbox.get('home_router');
-     */
-    Hitbox.prototype.get = function (key) {
-        return this[key];
-    };
-
     /**
      * Parses a server response
      * @name Web_Business#_parse_response
@@ -110,13 +123,7 @@
         if (header >= 300) {
             return callback(header, data_obj.response);
         }
-
-        try {
-            data_obj = JSON.parse((data_obj.response || data_obj.responseText));
-        } catch (e) {
-
-        }
-        return callback(null, data_obj);
+        return callback(null, data_obj.response);
     };
 
     /**
@@ -180,7 +187,7 @@
                 url:     url,
                 body:    post_body
             }, function (error, response, body) {
-                if (!error && response.statusCode == 200) {
+                if (!error &amp;&amp; response.statusCode == 200) {
                     that._parse_response(body, callback);
                 } else {
                     callback(response.statusCode, body);
@@ -282,7 +289,7 @@
 
 
             this.request(url, function (error, response, body) {
-                if (!error && response.statusCode == 200) {
+                if (!error &amp;&amp; response.statusCode == 200) {
                     that._parse_response(body, callback);
                 } else {
                     callback(response.statusCode, body);
@@ -375,7 +382,7 @@
                 if (url[url.length-1] === '?') {
                     url += arg + "=" + encodeURIComponent(query_params[arg].toString());
                 } else {
-                    url += "&" + arg + "=" + encodeURIComponent(query_params[arg].toString());
+                    url += "&amp;" + arg + "=" + encodeURIComponent(query_params[arg].toString());
                 }
             }
         }
@@ -390,7 +397,7 @@
      * @returns {bool} returns true is code is running on server
      */
     Hitbox.prototype._is_server = function () {
-        return ! (typeof window != 'undefined' && window.document);
+        return ! (typeof window != 'undefined' &amp;&amp; window.document);
     };
 
     /**
@@ -410,8 +417,8 @@
             data = {},
             url = 'media/';
 
-        if (params !== undefined && params.live) {
-            url += 'live/' + params.live;
+        if (params !== undefined &amp;&amp; params.stream) {
+            url += params.stream;
         }
 
         return this._get_message(data, {home_router: router, url: url}, callback);
@@ -542,25 +549,6 @@
     };
 
     /**
-     * Returns a list of hitbox server
-     * @name Hitbox#servers
-     * @public
-     * @function
-     * @param {object} params - params to add to function
-     * @param {object} options - options for the ajax call
-     * @param {function} callback - callback callback
-     * @returns {Object} xhr - xDomainObject
-     */
-    Hitbox.prototype.servers = function (params, options, callback) {
-        options = options || {};
-        var router = options.router || this.home_router,
-            data = {},
-            url = 'chat/servers.json';
-
-        return this._get_message(data, {home_router: router, url: url}, callback);
-    };
-
-    /**
      * Connect to chat
      * @name Hitbox#chat_connect
      * @public
@@ -657,8 +645,8 @@
         }
 
 
-        url += chats[index].server_ip;
-        url += '/socket.io/1/';
+        url += chats[index].server_ip,
+            url += '/socket.io/1/';
 
         return url;
     };
@@ -683,7 +671,7 @@
         try {
             url = this._create_websocket_url({chats: JSON.parse(params.chats), random: false});
         } catch (e) {
-            return callback('error parsing chats list');
+            return callback('error parsing chats list')
         }
 
         return this._get_message(data, {home_router: router, url: 'http://' + url}, function (error, response) {
@@ -755,3 +743,26 @@
 
     return Hitbox;
 });
+</code></pre>
+        </article>
+    </section>
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Index</a></h2><h3>Classes</h3><ul><li><a href="Hitbox.html">Hitbox</a></li></ul>
+</nav>
+
+<br clear="both">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.3.0-alpha5</a> on Tue Aug 12 2014 15:10:26 GMT-0700 (PDT)
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>

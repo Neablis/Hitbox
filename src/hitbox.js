@@ -74,6 +74,20 @@
         return this;
     };
 
+
+    /**
+     * Get a value from the hitbox object
+     * @name Hitbox#set
+     * @function
+     * @public
+     * @param {object} home_router - object key/val to set
+     * @example
+     * Hitbox.get('home_router');
+     */
+    Hitbox.prototype.get = function (key) {
+        return this[key];
+    };
+
     /**
      * Parses a server response
      * @name Web_Business#_parse_response
@@ -82,7 +96,6 @@
      * @param {string} response - data for the post_body
      * @param {function} callback - callback callback
      * @returns {Object} xhr - xDomainObject
-     * @example
      *
      */
     Hitbox.prototype._parse_response = function (response, callback) {
@@ -97,7 +110,13 @@
         if (header >= 300) {
             return callback(header, data_obj.response);
         }
-        return callback(null, data_obj.response);
+
+        try {
+            data_obj = JSON.parse((data_obj.response || data_obj.responseText));
+        } catch (e) {
+
+        }
+        return callback(null, data_obj);
     };
 
     /**
@@ -109,7 +128,6 @@
      * @param {object} options - options for the ajax call and the url to call.
      * @param {function} callback - callback callback
      * @returns {Object} xhr - xDomainObject
-     * @example
      */
     Hitbox.prototype._post_message = function (data, options, callback) {
         callback = callback || function () {};
@@ -232,7 +250,6 @@
      * @param {function} error - error callback
      * @param {function} callback - callback callback
      * @returns {Object} xhr - xDomainObject
-     * @example
      */
     Hitbox.prototype._get_message = function (data, options, callback) {
         options = options || {};
@@ -386,7 +403,6 @@
      * @param {object} options - options for the ajax call
      * @param {function} callback - callback callback
      * @returns {Object} xhr - xDomainObject
-     * @example
      */
     Hitbox.prototype.media = function (params, options, callback) {
         options = options || {};
@@ -394,8 +410,8 @@
             data = {},
             url = 'media/';
 
-        if (params !== undefined && params.stream) {
-            url += params.stream;
+        if (params !== undefined && params.live) {
+            url += 'live/' + params.live;
         }
 
         return this._get_message(data, {home_router: router, url: url}, callback);
@@ -411,7 +427,6 @@
      * @param {object} options - options for the ajax call
      * @param {function} callback - callback callback
      * @returns {Object} xhr - xDomainObject
-     * @example
      */
     Hitbox.prototype.user = function (params, options, callback) {
         options = options || {};
@@ -440,7 +455,6 @@
      * @param {object} options - options for the ajax call
      * @param {function} callback - callback callback
      * @returns {Object} xhr - xDomainObject
-     * @example
      */
     Hitbox.prototype.followers = function (params, options, callback) {
         options = options || {};
@@ -474,7 +488,6 @@
      * @param {object} options - options for the ajax call
      * @param {function} callback - callback callback
      * @returns {Object} xhr - xDomainObject
-     * @example
      */
     Hitbox.prototype.games = function (params, options, callback) {
         options = options || {};
@@ -495,7 +508,6 @@
      * @param {object} options - options for the ajax call
      * @param {function} callback - callback callback
      * @returns {Object} xhr - xDomainObject
-     * @example
      */
     Hitbox.prototype.games = function (params, options, callback) {
         options = options || {};
@@ -519,13 +531,31 @@
      * @param {object} options - options for the ajax call
      * @param {function} callback - callback callback
      * @returns {Object} xhr - xDomainObject
-     * @example
      */
     Hitbox.prototype.chats = function (params, options, callback) {
         options = options || {};
         var router = options.router || this.home_router,
             data = {},
             url = 'chat/servers';
+
+        return this._get_message(data, {home_router: router, url: url}, callback);
+    };
+
+    /**
+     * Returns a list of hitbox server
+     * @name Hitbox#servers
+     * @public
+     * @function
+     * @param {object} params - params to add to function
+     * @param {object} options - options for the ajax call
+     * @param {function} callback - callback callback
+     * @returns {Object} xhr - xDomainObject
+     */
+    Hitbox.prototype.servers = function (params, options, callback) {
+        options = options || {};
+        var router = options.router || this.home_router,
+            data = {},
+            url = 'chat/servers.json';
 
         return this._get_message(data, {home_router: router, url: url}, callback);
     };
@@ -539,7 +569,6 @@
      * @param {object} options - options for the ajax call
      * @param {function} callback - callback callback
      * @returns {Object} xhr - xDomainObject
-     * @example
      */
     Hitbox.prototype.chat_connect = function (params, options, callback) {
         options = options || {};
@@ -567,7 +596,6 @@
      * @name Hitbox#_on_message
      * @private
      * @function
-     * @example
      */
     Hitbox.prototype._on_message = function (message) {
         var context = this;
@@ -579,9 +607,8 @@
     /**
      * listeners for websocket
      * @name Hitbox#add_listener
-     * @private
+     * @public
      * @function
-     * @example
      */
     Hitbox.prototype.add_listener = function (listener) {
         listeners.push(listener);
@@ -593,8 +620,6 @@
      * @public
      * @function
      * @param {object} message - the message to send
-     * @returns {Object} xhr - xDomainObject
-     * @example
      */
     Hitbox.prototype.send_message = function (message) {
         var context = this;
@@ -632,8 +657,8 @@
         }
 
 
-        url += chats[index].server_ip,
-            url += '/socket.io/1/';
+        url += chats[index].server_ip;
+        url += '/socket.io/1/';
 
         return url;
     };
@@ -658,7 +683,7 @@
         try {
             url = this._create_websocket_url({chats: JSON.parse(params.chats), random: false});
         } catch (e) {
-            return callback('error parsing chats list')
+            return callback('error parsing chats list');
         }
 
         return this._get_message(data, {home_router: router, url: 'http://' + url}, function (error, response) {
@@ -681,7 +706,6 @@
      * @param {object} options - options for the ajax call
      * @param {function} callback - callback callback
      * @returns {Object} xhr - xDomainObject
-     * @example
      */
     Hitbox.prototype.token = function (params, options, callback) {
         options = options || {};
@@ -711,7 +735,6 @@
      * @param {object} options - options for the ajax call
      * @param {function} callback - callback callback
      * @returns {Object} xhr - xDomainObject
-     * @example
      */
     Hitbox.prototype.ingesting = function (params, options, callback) {
         options = options || {};

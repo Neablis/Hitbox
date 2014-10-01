@@ -27,13 +27,8 @@ gulp.task('scripts', function() {
 
 // Create docs
 gulp.task('docs', function() {
-    return gulp.src("./src/*.js")
-        .pipe(jsdoc('./documentation-output'))
-});
-
-gulp.task('readme', function() {
-    return gulp.src("./src/*.js")
-        .pipe(jsdoc('./documentation-output'))
+    return gulp.src("./src/hitbox.js")
+        .pipe(jsdoc('./docs'))
 });
 
 // Watch Files For Changes

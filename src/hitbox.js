@@ -509,7 +509,7 @@
      * @param {function} callback - callback callback
      * @returns {Object} xhr - xDomainObject
      */
-    Hitbox.prototype.games = function (params, options, callback) {
+    Hitbox.prototype.teams = function (params, options, callback) {
         options = options || {};
         var router = options.router || this.home_router,
             data = {},

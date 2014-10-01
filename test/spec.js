@@ -52,6 +52,19 @@ describe("Hitbox endpoint tests", function () {
 
         server.respond();
 	});
+
+	it("Should hit media endpoint with a stream and return a specific media stream", function () {
+        var hitbox = new Hitbox();
+        server.respondWith("GET", "http://api.hitbox.tv/media/", [200, { "Content-Type": "application/json" },'{}']);
+        var callbacks = [sinon.spy()];
+
+        hitbox.media(undefined, undefined, function (error, response) {
+			expect(error).toBeFalsy();
+			expect(response).toEqual({});
+        });
+
+        server.respond();
+	});
 });
 
 describe("Hitbox websocket tests", function () {

@@ -6,7 +6,7 @@
 
 /**
  * Hitbox API
- * A module representing the voxer business server calls.
+ * A module representing hitbox server calls and websocket interactions
  * @name Hitbox
  * @return Hitbox
  * @version 1.0
